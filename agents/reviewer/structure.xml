@@ -1,0 +1,15 @@
+<!-- agents/reviewer/structure.xml -->
+<structure>
+  <review>
+    <score>
+       <min>0</min>
+       <max>10</max>
+    </score>
+    <feedback>
+      <aspect>Coherence</aspect>
+      <aspect>Grammar</aspect>
+      <aspect>Adherence to Input</aspect>
+      <aspect>Creativity</aspect>
+    </feedback>
+  </review>
+</structure>

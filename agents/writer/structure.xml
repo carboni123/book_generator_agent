@@ -1,0 +1,30 @@
+<!-- agents/writer/structure.xml -->
+<structure>
+  <book>
+    <chapters>
+      <chapter>
+        <title>Chapter Title 1</title>
+        <sections>
+          <section>Section 1</section>
+          <section>Section 2</section>
+          <section>Section 3</section>
+        </sections>
+      </chapter>
+     <chapter>
+        <title>Chapter Title 2</title>
+        <sections>
+          <section>Section 1</section>
+          <section>Section 2</section>
+        </sections>
+     </chapter>
+     <chapter>
+        <title>Chapter Title 3</title>
+        <sections>
+          <section>Section 1</section>
+          <section>Section 2</section>
+          <section>Section 3</section>
+        </sections>
+      </chapter>
+    </chapters>
+  </book>
+</structure>
