@@ -59,6 +59,7 @@ class WriterAgent:
         prompt += f"<theme>{input}</theme>"
         prompt += f"<role_description>{self._load_role_description()}</role_description>"
         prompt += f"<output_structure>{self._load_output_structure()}</output_structure>"
+        prompt += "</prompt>"
         response = await self.api.generate_text(prompt)
         return response
 

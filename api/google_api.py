@@ -1,5 +1,6 @@
 # api/google_api.py
 import os
+import re
 from api.api import API
 import google.generativeai as genai
 
@@ -91,6 +92,7 @@ class GoogleAPI(API):
         model = genai.GenerativeModel(self.MODEL_NAME)
         try:
             response = model.generate_content(prompt)
+            return extract_xml_from_markdown(response.text)
         except Exception as e:
             self.log_output({"error": str(e)}, self.LOG_FILE)
             print(f"Error generating text with Google API: {e}")
@@ -105,6 +107,24 @@ class GoogleAPI(API):
     def get_model_info(self, model: str):
         model_info = genai.get_model(model)
         print(model_info)
+
+
+def extract_xml_from_markdown(markdown_response: str) -> str:
+    """
+    Extract XML content from a Markdown response.
+
+    Parameters:
+        markdown_response (str): The Markdown response containing XML in a code block.
+    Returns:
+        str: Extracted XML content or the input if no XML is found.
+    """
+    # Regex to extract content within the XML code block
+    match = re.search(r"```xml\n(.*?)\n```", markdown_response, re.DOTALL)
+    if match:
+        return match.group(
+            1
+        ).strip()  # Return the XML content, stripped of extra whitespace
+    return markdown_response  # Return input if no XML is found
 
 
 if __name__ == "__main__":
