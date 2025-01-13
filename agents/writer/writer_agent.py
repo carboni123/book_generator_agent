@@ -1,34 +1,47 @@
 # agents/writer/writer_agent.py
-from api import API
+from api.api import API
+from api.google_api import GoogleAPI
 from xml.etree import ElementTree
+import logging
+import asyncio
+
 
 class WriterAgent:
     """
     Agent responsible for generating book content.
     """
+
     def __init__(self, api: API):
-      self.api = api
-      self.role_description = self._load_role_description()
-      self.book_structure = self._load_book_structure()
-    
-    def _load_role_description(self):
-      """
-      Loads the role description for this agent from role.xml
-      """
-      tree = ElementTree.parse("agents/writer/role.xml")
-      root = tree.getroot()
-      description = root.find("description").text
-      return description
+        self.api = api
+        self.role_description = self._load_role_description()
+        self.book_structure = self._load_output_structure()
 
-    def _load_book_structure(self):
-      """
-      Loads the book structure for this agent from structure.xml
-      """
-      tree = ElementTree.parse("agents/writer/structure.xml")
-      root = tree.getroot()
-      return root
+    def _load_role_description(self) -> str:
+        """
+        Loads the role description for this agent from role.xml
+        """
+        tree = ElementTree.parse("agents/writer/role.xml")
+        root = tree.getroot()
+        description = root.find("description").text
+        return description
 
-    def generate_book(self, input_prompt):
+    def _load_output_structure(self) -> str:
+        """
+        Loads the output structure for this agent from structure.xml
+        """
+        prefix = """Output Structure Instructions:
+1. The LLM must adhere strictly to the schema provided.
+2. The LLM must use the XML format provided.
+        """
+        with open("agents/writer/structure.xml", "r", encoding="utf-8") as xml:
+            content = xml.read()  # Read the entire file content
+        return prefix + content
+
+    def _load_instructions(self) -> str:
+        instructions = "Write a book with about 300 words per chapter. The book should have at least 4 chapters."
+        return instructions
+
+    async def generate_book(self, input):
         """
         Generates a book based on a given input prompt, structured into chapters and sections.
 
@@ -36,28 +49,20 @@ class WriterAgent:
             input_prompt (str): The input prompt for the book.
 
         Returns:
-            str: The generated book text.
+            str: The generated book in XML format.
         """
-        book_text = ""
-        
-        prompt_prefix = f"""
-        {self.role_description}
-        
-        You must write a book based on this prompt: {input_prompt}. 
-        The book structure is defined as follows:
-        """
-        
-        chapters = self.book_structure.find("book/chapters")
-        
-        for chapter in chapters:
-            chapter_title = chapter.find("title").text
-            book_text += f"\nChapter: {chapter_title}\n"
-            
-            for section in chapter.find("sections"):
-                section_title = section.text
-                prompt = f"""{prompt_prefix}
-                You are now writing section {section_title} of chapter {chapter_title} following this prompt: {input_prompt}."""
-                section_content = self.api.generate_text(prompt)
-                book_text += f"\nSection: {section_title}\n{section_content}\n"
-                
-        return book_text
+        logging.info(f"Generating book with prompt: {input}")
+        # Create the root element
+        prompt = "<prompt>"
+        # Add subelements
+        prompt += f"<input_instructions>{self._load_instructions()}</input_instructions>"
+        prompt += f"<theme>{input}</theme>"
+        prompt += f"<role_description>{self._load_role_description()}</role_description>"
+        prompt += f"<output_structure>{self._load_output_structure()}</output_structure>"
+        response = await self.api.generate_text(prompt)
+        return response
+
+
+if __name__ == "__main__":
+    writer = WriterAgent(None)
+    print(asyncio.run(writer.generate_book("A fantasy adventure in a magical kingdom")))

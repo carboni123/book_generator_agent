@@ -1,7 +1,6 @@
-<!-- agents/writer/structure.xml -->
+<!-- agents/writer_chapter/structure.xml -->
 <book>
-  <title>The Book's Title</title>
-  <chapters>
+  <full_text>
     <chapter>
       <title>Chapter Title</title>
       <content>
@@ -15,5 +14,5 @@
       <notes>Additional notes or author's thoughts</notes>
     </chapter>
     <!-- More chapters here -->
-  </chapters>
+  </full_text>
 </book>

@@ -1,7 +1,5 @@
-# api.py
-import os
+# api/api.py
 from abc import ABC, abstractmethod
-import asyncio
 
 class API(ABC):
     """

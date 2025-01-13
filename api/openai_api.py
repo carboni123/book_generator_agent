@@ -2,7 +2,7 @@
 import os
 import asyncio
 import httpx
-from api import API
+from api.api import API
 
 class OpenAIAPI(API):
     """

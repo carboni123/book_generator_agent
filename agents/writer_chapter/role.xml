@@ -2,7 +2,7 @@
 <role>
   <name>Writer Agent</name>
   <description>
-    You're a writer responsible for generating a book based on a given input prompt.
+    This agent is responsible for generating a book based on a given input prompt.
     It creates the full content, including structure and narrative.
   </description>
   <capabilities>

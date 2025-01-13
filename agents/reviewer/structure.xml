@@ -1,15 +1,32 @@
 <!-- agents/reviewer/structure.xml -->
-<structure>
-  <review>
-    <score>
-       <min>0</min>
-       <max>10</max>
-    </score>
-    <feedback>
-      <aspect>Coherence</aspect>
-      <aspect>Grammar</aspect>
-      <aspect>Adherence to Input</aspect>
-      <aspect>Creativity</aspect>
-    </feedback>
-  </review>
-</structure>
+<review>
+  <score>
+    <overall>0-10</overall>
+    <categories>
+      <category name="Literary_Merit" score="0-10" />
+      <category name="Personal_Enjoyment" score="0-10" />
+      <category name="Cultural_References" score="0-10" />
+    </categories>
+  </score>
+  <feedback>
+    <aspect name="Coherence" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+    <aspect name="Grammar" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+    <aspect name="Adherence_to_Input" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+    <aspect name="Creativity" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+    <!-- Additional aspects can be added here -->
+    <aspect name="Character_Development" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+    <aspect name="Pacing" rating="0-5">
+      <comment>[Textual feedback here]</comment>
+    </aspect>
+  </feedback>
+</review>
