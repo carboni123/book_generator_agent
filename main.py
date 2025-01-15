@@ -13,7 +13,9 @@ import os
 import asyncio
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 def get_input():
@@ -25,11 +27,16 @@ def get_input():
     """
     use_random = input("Generate random input? (yes/no): ").lower() == "yes"
     if use_random:
-        input_options = ["A fantasy adventure in a magical kingdom", "A sci-fi thriller on a space station",
-                        "A mystery in a haunted house", "A romance between a detective and a suspect"]
+        input_options = [
+            "A fantasy adventure in a magical kingdom",
+            "A sci-fi thriller on a space station",
+            "A mystery in a haunted house",
+            "A romance between a detective and a suspect",
+        ]
         return random.choice(input_options)
     else:
         return input("Enter the book's theme: ")
+
 
 def create_api_instance(api_type, api_key):
     if api_type == "openai":
@@ -41,7 +48,10 @@ def create_api_instance(api_type, api_key):
     else:
         raise ValueError(f"Invalid API type: {api_type}")
 
-async def generate_book(writer, book, feedback, input_prompt, log_filename, exporter, epoch):
+
+async def generate_book(
+    writer, book, review, input_prompt, log_filename, exporter, epoch
+):
     """
     Generates and reviews a book, with a timeout for API calls.
 
@@ -59,7 +69,7 @@ async def generate_book(writer, book, feedback, input_prompt, log_filename, expo
     """
     try:
         # Generate Book
-        book = await writer.generate_book(input_prompt, book, feedback)
+        book = await writer.generate_book(input_prompt, book, review)
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         book_filename = f"book_{timestamp}_epoch{epoch + 1}.txt"
 
@@ -79,7 +89,8 @@ async def generate_book(writer, book, feedback, input_prompt, log_filename, expo
             log_file.write(f"Epoch: {epoch + 1}, Error: {error_message}\n")
 
         return None, 0, error_message
-    
+
+
 async def review_book(reviewer, book, input_prompt, log_filename, exporter, epoch):
     """
     Generates and reviews a book, with a timeout for API calls.
@@ -104,7 +115,9 @@ async def review_book(reviewer, book, input_prompt, log_filename, exporter, epoc
 
         # Log review
         with open(log_filename, "a", encoding="utf-8") as log_file:
-            log_file.write(f"Epoch: {epoch + 1}, Score: {score}, Score Categories: {score_cat}, Feedback: {feedback}\n")
+            log_file.write(
+                f"Epoch: {epoch + 1}, Score: {score}, Score Categories: {score_cat}, Feedback: {feedback}\n"
+            )
 
         logging.info(f"Review Score: {score}")
         return review, score, feedback
@@ -118,15 +131,27 @@ async def review_book(reviewer, book, input_prompt, log_filename, exporter, epoc
             log_file.write(f"Epoch: {epoch + 1}, Error: {error_message}\n")
 
         return None, 0, error_message
-    
+
+
 async def main():
     """
     Main function to run the AI book generator.
     """
     parser = argparse.ArgumentParser(description="AI Book Generator")
-    parser.add_argument("--api", type=str, default="google", choices=["openai", "google", "mock"], help="API to use (openai, google)")
+    parser.add_argument(
+        "--api",
+        type=str,
+        default="google",
+        choices=["openai", "google", "mock"],
+        help="API to use (openai, google)",
+    )
     parser.add_argument("--api_key", type=str, help="API key for the selected API")
-    parser.add_argument("--max_iterations", type=int, default=5, help="Maximum iterations for book generation.")
+    parser.add_argument(
+        "--max_iterations",
+        type=int,
+        default=5,
+        help="Maximum iterations for book generation.",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
@@ -145,12 +170,17 @@ async def main():
     writer = WriterAgent(api)
     reviewer = ReviewerAgent(api)
     exporter = PDFExporter()
-    filter = Filter(threshold=92)
+    filter = Filter(threshold=86)
 
     log_filename = "review_log.txt"
 
+    previous_books = [None, None]
+    previous_reviews = [None, None]
+
+    approved = False
     book = None
     score = None
+    best_score = 0
     review = None
     for epoch in range(args.max_iterations):
         logging.info(f"\n--- Epoch {epoch + 1} ---")
@@ -158,7 +188,13 @@ async def main():
             generate_book
             # Generate and review the book
             book = await generate_book(
-                writer, book, review, input_prompt, log_filename, exporter, epoch
+                writer,
+                previous_books,
+                previous_reviews,
+                input_prompt,
+                log_filename,
+                exporter,
+                epoch,
             )
             # Generate and review the book
             review, score, feedback = await review_book(
@@ -168,8 +204,18 @@ async def main():
                 logging.warning("No book generated, skipping this iteration.")
                 continue
 
+            # Update history with current book and review
+            if int(score) > best_score:
+                best_score = int(score)
+                previous_books[0] = book
+                previous_reviews[0] = review
+
+            previous_books[1] = book
+            previous_reviews[1] = review
+
             # Filter and export if approved
             if filter.is_approved(int(score), feedback):
+                approved = True
                 logging.info("Book approved!")
                 timestamp = time.strftime("%Y%m%d-%H%M%S")
                 final_filename = f"book_final_{timestamp}.txt"
@@ -178,13 +224,17 @@ async def main():
                 break  # Stop iterating if the book is approved
 
             # Update input prompt with feedback for next iteration
+            logging.info(f"Current book score: {score}")
             logging.info("Book not approved, refining prompt for the next iteration...")
 
         except Exception as e:
             logging.error(f"An error occurred during epoch {epoch + 1}: {e}")
+            if approved:
+                break
             continue
 
     logging.info("\nBook generation process finished.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

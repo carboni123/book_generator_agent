@@ -54,13 +54,13 @@ class ReviewerAgent:
             f"<input_instructions>{self._load_instructions()}</input_instructions>"
         )
         prompt += f"<input_prompt>{input_prompt}</input_prompt>"
-        prompt += book
         prompt += (
             f"<role_description>{self._load_role_description()}</role_description>"
         )
         prompt += (
             f"<output_structure>{self._load_review_structure()}</output_structure>"
         )
+        prompt += book
         prompt += "</reviewer_prompt>"
 
         # Log the prompt to a file

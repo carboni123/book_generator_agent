@@ -14,6 +14,7 @@ class WriterAgent:
         self.api = api
         self.role_description = self._load_role_description()
         self.book_structure = self._load_output_structure()
+        self.book_draft = False
 
     def _load_role_description(self) -> str:
         """
@@ -37,17 +38,25 @@ class WriterAgent:
         return prefix + content
 
     def _load_instructions(self) -> str:
-        instructions = "Write a book with about 300 words per chapter. The book should have at least 4 chapters."
-        return instructions
+        if not self.book_draft:
+            self.book_draft = True
+            return (
+                "Write a book with approximately 500 words per chapter. "
+                "Ensure the book contains at least 4 chapters and follows a clear narrative structure with a distinct beginning, middle, and end. "
+                "The beginning should introduce the setting, characters, and conflict. "
+                "The middle should develop the story, building tension and deepening the conflict. "
+                "The end should resolve the conflict and provide a satisfying conclusion, even if it leaves room for a sequel."
+            )
+        return "Refine the book based on the feedback provided by the Reviewer, focusing on clarity, coherence, and depth."
 
-    async def generate_book(self, input, book=None, review=None):
+    async def generate_book(self, input, previous_books=None, previous_reviews=None):
         """
         Generates a book based on a given input prompt, structured into chapters and sections.
 
         Args:
             input (str): The input prompt for the book.
-            book (str, optional): The existing book content for refinement. Defaults to None.
-            review (str, optional): The review feedback for improvement. Defaults to None.
+            previous_books (list, optional): A list of the previous book content for refinement. Defaults to None.
+            previous_reviews (list, optional): A list of the previous review feedback for improvement. Defaults to None.
 
         Returns:
             str: The generated book in XML format.
@@ -57,13 +66,21 @@ class WriterAgent:
         prompt = "<writer_prompt>"
         # Add subelements
         prompt += f"<input_instructions>{self._load_instructions()}</input_instructions>"
-        if book:
-            prompt += book
-        if review:
-            prompt += review
         prompt += f"<theme>{input}</theme>"
         prompt += f"<role_description>{self._load_role_description()}</role_description>"
         prompt += f"<output_structure>{self._load_output_structure()}</output_structure>"
+        if previous_books and previous_reviews:
+            for i, (book, review) in enumerate(zip(previous_books, previous_reviews)):
+                if i == 0:
+                    prompt += f"<best_book>"
+                else:
+                    prompt += f"<last_book>"
+                prompt += f"<book_content>{book}</book_content>"
+                prompt += f"<review_content>{review}</review_content>"
+                if i == 0:
+                    prompt += f"</best_book>"
+                else:
+                    prompt += f"<last_book>"
         prompt += "</writer_prompt>"
 
         # Log the prompt to a file
