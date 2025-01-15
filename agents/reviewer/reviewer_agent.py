@@ -54,7 +54,7 @@ class ReviewerAgent:
             f"<input_instructions>{self._load_instructions()}</input_instructions>"
         )
         prompt += f"<input_prompt>{input_prompt}</input_prompt>"
-        prompt += f"<book>{book}</book>"
+        prompt += book
         prompt += (
             f"<role_description>{self._load_role_description()}</role_description>"
         )
@@ -62,6 +62,11 @@ class ReviewerAgent:
             f"<output_structure>{self._load_review_structure()}</output_structure>"
         )
         prompt += "</reviewer_prompt>"
+
+        # Log the prompt to a file
+        with open("reviewer_sent_prompts.log", "a", encoding="utf-8") as log_file:
+            log_file.write(f"Prompt Sent:\n{prompt}\n\n")
+
         response = await self.api.generate_text(prompt)
         return response
 

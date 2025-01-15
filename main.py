@@ -179,7 +179,6 @@ async def main():
 
             # Update input prompt with feedback for next iteration
             logging.info("Book not approved, refining prompt for the next iteration...")
-            input_prompt = f"Improve the previous book. Feedback provided: {feedback}"
 
         except Exception as e:
             logging.error(f"An error occurred during epoch {epoch + 1}: {e}")

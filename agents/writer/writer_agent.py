@@ -58,13 +58,18 @@ class WriterAgent:
         # Add subelements
         prompt += f"<input_instructions>{self._load_instructions()}</input_instructions>"
         if book:
-            prompt += f"<book>{book}</book>"
+            prompt += book
         if review:
-            prompt += f"<review>{review}</review>"
+            prompt += review
         prompt += f"<theme>{input}</theme>"
         prompt += f"<role_description>{self._load_role_description()}</role_description>"
         prompt += f"<output_structure>{self._load_output_structure()}</output_structure>"
         prompt += "</writer_prompt>"
+
+        # Log the prompt to a file
+        with open("writer_sent_prompts.log", "a", encoding="utf-8") as log_file:
+            log_file.write(f"Prompt Sent:\n{prompt}\n\n")
+
         response = await self.api.generate_text(prompt)
         return response
 
