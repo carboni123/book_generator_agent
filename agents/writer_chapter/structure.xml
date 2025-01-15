@@ -1,0 +1,18 @@
+<!-- agents/writer_chapter/structure.xml -->
+<book>
+  <full_text>
+    <chapter>
+      <title>Chapter Title</title>
+      <content>
+        <section>
+          <title>Section Title</title>
+          <text>Section Content</text>
+        </section>
+        <!-- Additional sections here -->
+      </content>
+      <summary>A summary of the chapter</summary>
+      <notes>Additional notes or author's thoughts</notes>
+    </chapter>
+    <!-- More chapters here -->
+  </full_text>
+</book>

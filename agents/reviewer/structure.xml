@@ -1,0 +1,40 @@
+<review>
+  <score>
+    <overall>0-100</overall>
+    <categories>
+      <category name="Literary_Merit" score="0-100" />
+      <category name="Personal_Enjoyment" score="0-100" />
+      <category name="Cultural_and_Historical_Relevance" score="0-100" />
+      <category name="Emotional_Impact" score="0-100" />
+    </categories>
+  </score>
+  <feedback>
+    <aspect name="Coherence" rating="0-10">
+      <comment>[Evaluate the logical flow of ideas and transitions between sections.]</comment>
+    </aspect>
+    <aspect name="Grammar_and_Style" rating="0-10">
+      <comment>[Highlight grammatical issues or stylistic refinements needed.]</comment>
+    </aspect>
+    <aspect name="Adherence_to_Input" rating="0-10">
+      <comment>[Assess how well the book aligns with the provided theme and instructions.]</comment>
+    </aspect>
+    <aspect name="Creativity_and_Originality" rating="0-10">
+      <comment>[Evaluate the uniqueness and ingenuity of ideas and storytelling techniques.]</comment>
+    </aspect>
+    <aspect name="Character_Development" rating="0-10">
+      <comment>[Analyze the depth, consistency, and relatability of characters.]</comment>
+    </aspect>
+    <aspect name="Pacing_and_Tension" rating="0-10">
+      <comment>[Comment on the rhythm of the narrative and how it maintains reader engagement.]</comment>
+    </aspect>
+    <aspect name="Cultural_and_Historical_Sensitivity" rating="0-10">
+      <comment>[Assess how appropriately the text handles cultural and historical references.]</comment>
+    </aspect>
+    <aspect name="Emotional_Impact" rating="0-10">
+      <comment>[Evaluate the book's ability to evoke emotions and resonate with the reader.]</comment>
+    </aspect>
+    <aspect name="Finale_Chapter" rating="0-10">
+      <comment>[Ensure the book concludes with a clear finale, even if part of a series.]</comment>
+    </aspect>
+  </feedback>
+</review>
