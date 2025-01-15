@@ -3,6 +3,7 @@ from agents.writer.writer_agent import WriterAgent
 from agents.reviewer.reviewer_agent import ReviewerAgent
 from api.openai_api import OpenAIAPI
 from api.google_api import GoogleAPI
+from api.mock_api import MockAPI
 from exporter import PDFExporter
 from filter import Filter
 import random
@@ -35,94 +36,154 @@ def create_api_instance(api_type, api_key):
         return OpenAIAPI(api_key=api_key)
     elif api_type == "google":
         return GoogleAPI(api_key=api_key)
+    elif api_type == "mock":
+        return MockAPI(api_key=api_key)
     else:
         raise ValueError(f"Invalid API type: {api_type}")
 
-async def generate_and_review(writer, reviewer, input_prompt, log_filename, exporter, filter, epoch):
+async def generate_book(writer, book, feedback, input_prompt, log_filename, exporter, epoch):
     """
-    Generates and reviews a book, with a timeout for api calls
+    Generates and reviews a book, with a timeout for API calls.
+
+    Args:
+        writer: Writer agent responsible for generating the book.
+        book: The current book iteration. Book is None in the first.
+        feedback: Feedback from the current book iteration. feedback is None in the first.
+        input_prompt: The prompt for the writer agent.
+        log_filename: Path to the log file.
+        exporter: Exporter instance for saving books.
+        epoch: Current iteration or epoch.
+
+    Returns:
+        tuple: Generated book, review score, and feedback.
     """
     try:
-            # Generate Book
-            book = await writer.generate_book(input_prompt)
-            
-            # Save book content to a txt file
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            book_filename = f"book_{timestamp}_epoch{epoch + 1}.txt"
-            
-            with open(os.path.join(exporter.output_dir, book_filename), "w", encoding="utf-8") as file:
-              file.write(book)
-            logging.info(f"Book content saved to: {exporter.output_dir}/{book_filename}")
+        # Generate Book
+        book = await writer.generate_book(input_prompt, book, feedback)
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        book_filename = f"book_{timestamp}_epoch{epoch + 1}.txt"
 
+        # Save book content
+        book_path = os.path.join(exporter.output_dir, book_filename)
+        with open(book_path, "w", encoding="utf-8") as file:
+            file.write(book)
+        logging.info(f"Book content saved to: {book_path}")
+        return book
 
-            # Review Book
-            score, feedback = await reviewer.review_book(book, input_prompt)
-            logging.info(f"Review Score: {score}")
-            logging.info(f"Review Feedback: {feedback}\n")
-            
-            with open(log_filename, "a", encoding="utf-8") as log_file:
-                log_file.write(f"Epoch: {epoch + 1}, Score: {score}, Feedback: {feedback}\n")
-            return book, score, feedback
-    
     except Exception as e:
-            logging.error(f"An error occurred during iteration {epoch + 1}: {e}")
-            return None, 0, f"An error occurred during iteration {epoch + 1}: {e}"
+        error_message = f"An error occurred during iteration {epoch + 1}: {e}"
+        logging.error(error_message)
 
+        # Log error to review log
+        with open(log_filename, "a", encoding="utf-8") as log_file:
+            log_file.write(f"Epoch: {epoch + 1}, Error: {error_message}\n")
+
+        return None, 0, error_message
+    
+async def review_book(reviewer, book, input_prompt, log_filename, exporter, epoch):
+    """
+    Generates and reviews a book, with a timeout for API calls.
+
+    Args:
+        reviewer: Reviewer agent responsible for reviewing the book.
+        input_prompt: The prompt for the writer agent.
+        log_filename: Path to the log file.
+        exporter: Exporter instance for saving books.
+        epoch: Current iteration or epoch.
+
+    Returns:
+        tuple: Generated book, review score, and feedback.
+    """
+    try:
+        # Review Book
+        review = await reviewer.review_book(book, input_prompt)
+        review_parsed = reviewer.parse_review(review)
+        score = review_parsed.get("overall_score", 0)
+        score_cat = review_parsed.get("categories", 0)
+        feedback = review_parsed.get("feedback", "No feedback provided")
+
+        # Log review
+        with open(log_filename, "a", encoding="utf-8") as log_file:
+            log_file.write(f"Epoch: {epoch + 1}, Score: {score}, Score Categories: {score_cat}, Feedback: {feedback}\n")
+
+        logging.info(f"Review Score: {score}")
+        return review, score, feedback
+
+    except Exception as e:
+        error_message = f"An error occurred during iteration {epoch + 1}: {e}"
+        logging.error(error_message)
+
+        # Log error to review log
+        with open(log_filename, "a", encoding="utf-8") as log_file:
+            log_file.write(f"Epoch: {epoch + 1}, Error: {error_message}\n")
+
+        return None, 0, error_message
+    
 async def main():
     """
     Main function to run the AI book generator.
     """
     parser = argparse.ArgumentParser(description="AI Book Generator")
-    parser.add_argument("--api", type=str, default="openai", choices=["openai", "google"], help="API to use (openai, google)")
+    parser.add_argument("--api", type=str, default="google", choices=["openai", "google", "mock"], help="API to use (openai, google)")
     parser.add_argument("--api_key", type=str, help="API key for the selected API")
     parser.add_argument("--max_iterations", type=int, default=5, help="Maximum iterations for book generation.")
     args = parser.parse_args()
 
-    if not args.api_key:
-       logging.error("API key not provided")
-       return
+    logging.basicConfig(level=logging.INFO)
+    logging.info("Starting AI Book Generator...")
 
     input_prompt = get_input()
     logging.info(f"Initial Input: {input_prompt}\n")
-    
-    try:
-       api = create_api_instance(args.api, args.api_key)
-    except ValueError as e:
-       logging.error(e)
-       return
 
-    # Initialize Agents
+    try:
+        api = create_api_instance(args.api, args.api_key)
+    except ValueError as e:
+        logging.error(f"Failed to create API instance: {e}")
+        return
+
+    # Initialize agents and tools
     writer = WriterAgent(api)
     reviewer = ReviewerAgent(api)
-
-    # Initialize Exporter
     exporter = PDFExporter()
-
-    # Initialize Filter
-    filter = Filter(threshold=7)
+    filter = Filter(threshold=92)
 
     log_filename = "review_log.txt"
-    
+
+    book = None
+    score = None
+    review = None
     for epoch in range(args.max_iterations):
         logging.info(f"\n--- Epoch {epoch + 1} ---")
-        
-        book, score, feedback = await generate_and_review(writer, reviewer, input_prompt, log_filename, exporter, filter, epoch)
-        
-        if not book:
+        try:
+            generate_book
+            # Generate and review the book
+            book = await generate_book(
+                writer, book, review, input_prompt, log_filename, exporter, epoch
+            )
+            # Generate and review the book
+            review, score, feedback = await review_book(
+                reviewer, book, input_prompt, log_filename, exporter, epoch
+            )
+            if not book:
+                logging.warning("No book generated, skipping this iteration.")
+                continue
+
+            # Filter and export if approved
+            if filter.is_approved(int(score), feedback):
+                logging.info("Book approved!")
+                timestamp = time.strftime("%Y%m%d-%H%M%S")
+                final_filename = f"book_final_{timestamp}.txt"
+                exporter.export(book, final_filename)
+                logging.info(f"Book exported to {exporter.output_dir}/{final_filename}")
+                break  # Stop iterating if the book is approved
+
+            # Update input prompt with feedback for next iteration
+            logging.info("Book not approved, refining prompt for the next iteration...")
+            input_prompt = f"Improve the previous book. Feedback provided: {feedback}"
+
+        except Exception as e:
+            logging.error(f"An error occurred during epoch {epoch + 1}: {e}")
             continue
-    
-        # Filter and Export
-        if filter.is_approved(score):
-            logging.info("Book approved!")
-            timestamp = time.strftime("%Y%m%d-%H%M%S")
-            final_filename = f"book_final_{timestamp}.txt"
-            exporter.export(book, final_filename)
-            logging.info(f"Book exported to {exporter.output_dir}/{final_filename}")
-            break # Stop iterating if the book has been approved
-        else:
-             logging.info("Book not approved, iterating ...")
-                # Adjust input prompt based on feedback for the next iteration
-             input_prompt = f"Improve the previous book. Previous feedback was: {feedback}"
 
     logging.info("\nBook generation process finished.")
 

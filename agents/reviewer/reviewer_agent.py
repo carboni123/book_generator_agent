@@ -49,7 +49,7 @@ class ReviewerAgent:
         Returns:
              tuple: (score, feedback) where score is int and feedback is str
         """
-        prompt = "<prompt>"
+        prompt = "<reviewer_prompt>"
         prompt += (
             f"<input_instructions>{self._load_instructions()}</input_instructions>"
         )
@@ -61,9 +61,51 @@ class ReviewerAgent:
         prompt += (
             f"<output_structure>{self._load_review_structure()}</output_structure>"
         )
-        prompt += "</prompt>"
+        prompt += "</reviewer_prompt>"
         response = await self.api.generate_text(prompt)
         return response
+
+    def parse_review(self, xml_review):
+        """
+        Parses the review XML and extracts scores and feedback details.
+
+        Args:
+            xml_review (str): The review XML string.
+
+        Returns:
+            dict: A dictionary containing the overall score, category scores, and feedback.
+        """
+        try:
+            root = ElementTree.fromstring(xml_review)
+
+            # Extract overall score
+            overall_score = int(root.find(".//score/overall").text)
+
+            # Extract category scores
+            categories = {}
+            for category in root.findall(".//score/categories/category"):
+                name = category.get("name")
+                score = int(category.get("score"))
+                categories[name] = score
+
+            # Extract feedback for each aspect
+            feedback = {}
+            for aspect in root.findall(".//feedback/aspect"):
+                name = aspect.get("name")
+                rating = int(aspect.get("rating"))
+                comment = aspect.find("comment").text
+                feedback[name] = {"rating": rating, "comment": comment}
+
+            return {
+                "overall_score": overall_score,
+                "categories": categories,
+                "feedback": feedback
+            }
+
+        except ElementTree.ParseError as e:
+            raise ValueError(f"Failed to parse review XML: {e}")
+        except Exception as e:
+            raise ValueError(f"Error processing review XML: {e}")
 
 
 if __name__ == "__main__":

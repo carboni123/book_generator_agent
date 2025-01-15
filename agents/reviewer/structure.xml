@@ -1,30 +1,30 @@
 <review>
   <score>
-    <overall>0-10</overall>
+    <overall>0-100</overall>
     <categories>
-      <category name="Literary_Merit" score="0-10" />
-      <category name="Personal_Enjoyment" score="0-10" />
-      <category name="Cultural_References" score="0-10" />
+      <category name="Literary_Merit" score="0-100" />
+      <category name="Personal_Enjoyment" score="0-100" />
+      <category name="Cultural_References" score="0-100" />
     </categories>
   </score>
   <feedback>
-    <aspect name="Coherence" rating="0-5">
+    <aspect name="Coherence" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
-    <aspect name="Grammar" rating="0-5">
+    <aspect name="Grammar" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
-    <aspect name="Adherence_to_Input" rating="0-5">
+    <aspect name="Adherence_to_Input" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
-    <aspect name="Creativity" rating="0-5">
+    <aspect name="Creativity" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
     <!-- Additional aspects can be added here -->
-    <aspect name="Character_Development" rating="0-5">
+    <aspect name="Character_Development" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
-    <aspect name="Pacing" rating="0-5">
+    <aspect name="Pacing" rating="0-10">
       <comment>[Textual feedback here]</comment>
     </aspect>
   </feedback>

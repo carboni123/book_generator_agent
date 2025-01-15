@@ -120,3 +120,5 @@ dmypy.json
 *.spec
 *.key
 agents/reviewer/input_example.xml
+/mock
+/output
