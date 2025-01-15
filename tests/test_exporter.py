@@ -12,16 +12,22 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Register a font to ensure text rendering (optional but recommended for text checks)
-pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))  # Assuming 'Helvetica.ttf' exists
+pdfmetrics.registerFont(TTFont('Vera', 'Vera.ttf'))  # Assuming 'Vera.ttf' exists
 
 @pytest.fixture
 def pdf_exporter():
     return PDFExporter(output_dir="test_output")
 
 def test_pdf_export(pdf_exporter):
-    content = "This is a test book.\nIt has multiple lines.\nAnd some more content."
+    # Read the book content from the book.txt
+    with open("tests/book.txt", "r", encoding="utf-8") as file:
+        book_xml = file.read()
+    
     filename = "test_book"
-    pdf_exporter.export(content, filename)
+    
+    # Process the book and export to PDF
+    processed_content = pdf_exporter.process_book(book_xml)
+    pdf_exporter.export(processed_content, filename)
     
     filepath = os.path.join(pdf_exporter.output_dir, f"{filename}.pdf")
     

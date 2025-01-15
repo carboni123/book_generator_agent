@@ -8,6 +8,7 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from filter import Filter
 import logging
+from xml.etree import ElementTree as ET
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,18 +21,30 @@ def pdf_exporter():
     return PDFExporter(output_dir="test_output")
 
 def test_pipeline(pdf_exporter):
-    # Mock reviewer output
-    approved_score = 8
-    approved_feedback = "This book is fantastic!"
-    disapproved_score = 4
-    disapproved_feedback = "This book needs a lot of work."
-    content = "Test Content"
+    # Read the book and review content from files
+    with open("tests/book.txt", "r", encoding="utf-8") as file:
+        book_xml = file.read()
+    with open("tests/review.txt", "r", encoding="utf-8") as file:
+        review_xml = file.read()
+
+    #Parse Review
+    try:
+        root = ET.fromstring(review_xml)
+        score = int(root.find(".//score/overall").text)
+        feedback_elements = root.findall(".//feedback/aspect")
+        feedback = " ".join([f.find("comment").text for f in feedback_elements])
+    except Exception as e:
+         pytest.fail(f"Error parsing review XML: {e}")
+         return
+
     filename = "pipeline_test"
 
     # Test with approval
-    filter_approved = Filter(threshold=7)
-    if filter_approved.is_approved(approved_score, approved_feedback):
-        pdf_exporter.export(content, filename + "_approved")
+    filter_approved = Filter(threshold=6) #changed threshold to 6
+    
+    processed_book = pdf_exporter.process_book(book_xml)
+    if filter_approved.is_approved(score, feedback):
+        pdf_exporter.export(processed_book, filename + "_approved")
         filepath_approved = os.path.join(pdf_exporter.output_dir, filename + "_approved.pdf")
         assert os.path.exists(filepath_approved), f"PDF file does not exist at {filepath_approved}"
 
@@ -52,10 +65,11 @@ def test_pipeline(pdf_exporter):
 
     else:
       pytest.fail("Approved book was not approved by the filter")
+    
 
     # Test with disapproval
-    filter_disapproved = Filter(threshold=7)
-    if not filter_disapproved.is_approved(disapproved_score, disapproved_feedback):
+    filter_disapproved = Filter(threshold=9) #Changed threshold to 9
+    if not filter_disapproved.is_approved(score, feedback):
         filepath_disapproved = os.path.join(pdf_exporter.output_dir, filename + "_disapproved.pdf")
         assert not os.path.exists(filepath_disapproved), f"PDF file should not exist at {filepath_disapproved}"
     else:

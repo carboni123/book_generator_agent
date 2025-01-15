@@ -214,13 +214,13 @@ async def main():
             previous_reviews[1] = review
 
             # Filter and export if approved
-            if filter.is_approved(int(score), feedback):
-                approved = True
+            if filter.is_approved(int(score), review):
                 logging.info("Book approved!")
                 timestamp = time.strftime("%Y%m%d-%H%M%S")
-                final_filename = f"book_final_{timestamp}.txt"
-                exporter.export(book, final_filename)
-                logging.info(f"Book exported to {exporter.output_dir}/{final_filename}")
+                final_filename = f"book_final_{timestamp}"
+                processed_content = exporter.process_book(book)
+                exporter.export(processed_content, final_filename)
+                logging.info(f"Book exported to {exporter.output_dir}/{final_filename}.pdf")
                 break  # Stop iterating if the book is approved
 
             # Update input prompt with feedback for next iteration
