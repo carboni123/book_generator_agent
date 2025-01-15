@@ -1,6 +1,5 @@
 # agents/writer/writer_agent.py
 from api.api import API
-from api.google_api import GoogleAPI
 from xml.etree import ElementTree
 import logging
 import asyncio
@@ -41,12 +40,14 @@ class WriterAgent:
         instructions = "Write a book with about 300 words per chapter. The book should have at least 4 chapters."
         return instructions
 
-    async def generate_book(self, input):
+    async def generate_book(self, input, book=None, review=None):
         """
         Generates a book based on a given input prompt, structured into chapters and sections.
 
         Args:
-            input_prompt (str): The input prompt for the book.
+            input (str): The input prompt for the book.
+            book (str, optional): The existing book content for refinement. Defaults to None.
+            review (str, optional): The review feedback for improvement. Defaults to None.
 
         Returns:
             str: The generated book in XML format.
@@ -56,6 +57,10 @@ class WriterAgent:
         prompt = "<prompt>"
         # Add subelements
         prompt += f"<input_instructions>{self._load_instructions()}</input_instructions>"
+        if book:
+            prompt += f"<book>{book}</book>"
+        if review:
+            prompt += f"<review>{review}</review>"
         prompt += f"<theme>{input}</theme>"
         prompt += f"<role_description>{self._load_role_description()}</role_description>"
         prompt += f"<output_structure>{self._load_output_structure()}</output_structure>"
@@ -65,5 +70,7 @@ class WriterAgent:
 
 
 if __name__ == "__main__":
-    writer = WriterAgent(None)
+    from api.google_api import GoogleAPI
+    api = GoogleAPI("google_api.key")
+    writer = WriterAgent(api)
     print(asyncio.run(writer.generate_book("A fantasy adventure in a magical kingdom")))
