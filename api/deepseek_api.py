@@ -1,49 +1,50 @@
-# api/openai_api.py
+# api/deepseek_api.py
 import os
 import asyncio
 from api.api import API
 from openai import OpenAI
 
 
-class OpenAIAPI(API):
+class DeepSeekAPI(API):
     """
-    Concrete class for interactions with the OpenAI API.
+    Concrete class for interactions with the DeepSeek API.
     """
 
     def __init__(self, api_key=None):
         """
-        Initializes the OpenAI API object.
+        Initializes the OpenAI (DeepSeek) API object.
 
         :param api_key: Can be either an actual API key string or
                         a path to a file containing the API key.
         """
         super().__init__(api_key)
         self.client = None
+        self.api_url = "https://api.deepseek.com"
 
         # 1. If an api_key is provided and it's a file path, load from file.
         if api_key and os.path.isfile(api_key):
             self.api_key = self._load_api_key_from_file(api_key)
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
         # 2. If an api_key is provided but not a file path, assume it's the key itself.
         elif api_key:
             self.api_key = api_key
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
 
         # 3. If no api_key passed in or file loading failed, attempt to load from the environment.
         if not self.api_key:
             self.api_key = self._load_api_key_from_env()
-            self.client = OpenAI(api_key=self.api_key)
+            self.client = OpenAI(api_key=self.api_key, base_url=self.api_url)
 
         # 4. If we still don’t have a key or a client, raise an error.
         if not self.api_key or not self.client:
             raise ValueError(
-                "No valid OpenAI API key found. Provide it as a string, file path, "
-                "or set OPENAI_API_KEY in the environment."
+                "No valid DeepSeek API key found. Provide it as a string, file path, "
+                "or set DEEPSEEK_API_KEY in the environment."
             )
 
     def _load_api_key_from_file(self, key_path: str) -> str:
         """
-        Loads the OpenAI API key from a file.
+        Loads the DeepSeek API key from a file.
 
         :param key_path: Path to the file containing the API key.
         :return: The API key as a string.
@@ -61,31 +62,31 @@ class OpenAIAPI(API):
 
     def _load_api_key_from_env(self) -> str:
         """
-        Loads the OpenAI API key from environment variables.
+        Loads the DeepSeek API key from environment variables.
 
         :return: The API key as a string.
         :raises ValueError: If the API key is not found in the environment variables.
         """
-        api_key = os.environ.get("OPENAI_API_KEY")
+        api_key = os.environ.get("DEEPSEEK_API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment variables.")
+            raise ValueError("DEEPSEEK_API_KEY not found in environment variables.")
         return api_key
 
     async def generate_text(
         self,
         prompt,
-        model="chatgpt-4o-latest",
+        model="deepseek-chat",
         max_tokens=8192,
         temperature=1.0,
         timeout=10,
         **kwargs,
     ):
         """
-        Generates text using the OpenAI API.
+        Generates text using the DeepSeek API.
 
         Args:
             prompt (str): The input prompt for text generation.
-            model (str): The OpenAI model to use.
+            model (str): The DeepSeek model to use.
             max_tokens (int): The maximum number of tokens for the generated text.
             temperature (float): The sampling temperature.
             timeout (int): Timeout in seconds for the API call.
@@ -131,6 +132,6 @@ class OpenAIAPI(API):
 
 if __name__ == "__main__":
     # Example: Supply a path to a file containing your key,
-    # or just ensure OPENAI_API_KEY is set in your environment.
-    api = OpenAIAPI("openai_api.key")
+    # or just ensure DEEPSEEK_API_KEY is set in your environment.
+    api = DeepSeekAPI("deepseek_api.key")
     api.test_api()
